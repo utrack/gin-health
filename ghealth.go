@@ -1,3 +1,47 @@
+/*
+Package ghealth provides a Gin middleware
+to gocraft/health performance monitoring toolkit.
+
+By default it creates StatsD sink, falling back to stdout if
+error happened or StatsD server was not provided.
+
+Example
+
+	func main() {
+		// Standard router initialization
+		router := gin.Default()
+
+		// First, you need to create a new stream...
+
+		// Simplest sink, stdout only
+		hstream := ghealth.NewStream("", "", "")
+
+		// STDOUT and JSON sinks; creates independent http server on port 5020
+		hstream := ghealth.NewStream("", "", "127.0.0.1:5020")
+
+		// StatsD and JSON sinks
+		hstream := ghealth.NewStream("statsd.server:5000", "yourappname", "127.0.0.1:5020")
+
+		// It's a standard *health.Stream, so you can do anything you want!
+		hstream.AddSink(&health.WriterSink{os.Stdout})
+
+
+		router.Use(ghealth.Health(hstream))
+		...
+	}
+
+	var someRoute gin.HandlerFunc = func(c *gin.Context) {
+		// Retrieve a job object
+		job := ghealth.Job(c, "some_route")
+
+		// It's a *health.Job, read health godoc for more info :)
+		job.Event("some_event")
+	}
+
+At the moment it wasn't heavily tested. I'm still not sure how health
+implements concurrency, but as long as stream is thread-safe - ghealth
+should be, too.
+*/
 package ghealth
 
 import (
