@@ -19,8 +19,10 @@ const (
 // Also creates Json sink for healthd at supplied address
 // (serversink) if not empty.
 //
-// statsd: StatsD address and port
-// appname Application name for StatsD
+// statsd: StatsD address and port.
+//
+// appname Application name for StatsD.
+//
 // serversink: Bind address for Json sink, empty if not needed.
 func NewStream(statsd string, appname string, serversink string) *health.Stream {
 	var stream = health.NewStream()
@@ -49,6 +51,7 @@ func NewStream(statsd string, appname string, serversink string) *health.Stream 
 	return stream
 }
 
+// Use this method to inject the middleware.
 func Health(stream *health.Stream) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Set(defaultStreamKey, stream)
@@ -58,8 +61,9 @@ func Health(stream *health.Stream) gin.HandlerFunc {
 
 // Job creates a new job with given name.
 //
-// c: current context
-// name: job's name
+// c: current Gin context.
+//
+// name: Job's name.
 func Job(c *gin.Context, name string) *health.Job {
 	job := c.MustGet(defaultStreamKey).(*health.Stream).NewJob(name)
 	c.Set(defaultJobKey, time.Now())
