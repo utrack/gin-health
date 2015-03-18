@@ -5,6 +5,9 @@ to gocraft/health performance monitoring toolkit.
 By default it creates StatsD sink, falling back to stdout if
 error happened or StatsD server was not provided.
 
+Recovery is supported and panics are sent as general errors
+with request's URI.
+
 Example
 
 	func main() {
@@ -48,6 +51,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gocraft/health"
+	"net/http"
 	"os"
 	"time"
 )
@@ -95,9 +99,15 @@ func NewStream(statsd string, appname string, serversink string) *health.Stream 
 	return stream
 }
 
-// Use this method to inject the middleware.
+// Use this method to inject the middleware and recovery.
 func Health(stream *health.Stream) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		defer func() {
+			if rval := recover(); rval != nil {
+				stream.EventErr(fmt.Sprintf("Panic at %v", c.Request.RequestURI), rval.(error))
+				c.Writer.WriteHeader(http.StatusInternalServerError)
+			}
+		}()
 		c.Set(defaultStreamKey, stream)
 		c.Next()
 	}
