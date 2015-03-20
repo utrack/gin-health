@@ -100,14 +100,18 @@ func NewStream(statsd string, appname string, serversink string) *health.Stream 
 }
 
 // Use this method to inject the middleware and recovery.
-func Health(stream *health.Stream) gin.HandlerFunc {
+// Debug mode disables panic recovery, so all the panic messages
+// would be logged to stderr properly.
+func Health(stream *health.Stream, debug bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		defer func() {
-			if rval := recover(); rval != nil {
-				stream.EventErr(fmt.Sprintf("Panic at %v", c.Request.RequestURI), rval.(error))
-				c.Writer.WriteHeader(http.StatusInternalServerError)
-			}
-		}()
+		if !debug {
+			defer func() {
+				if rval := recover(); rval != nil {
+					stream.EventErr(fmt.Sprintf("Panic at %v", c.Request.RequestURI), rval.(error))
+					c.Writer.WriteHeader(http.StatusInternalServerError)
+				}
+			}()
+		}
 		c.Set(defaultStreamKey, stream)
 		c.Next()
 	}
