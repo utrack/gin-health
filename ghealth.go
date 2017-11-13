@@ -22,8 +22,8 @@ Example
 		// STDOUT and JSON sinks; creates independent http server on port 5020
 		hstream := ghealth.NewStream("", "", "127.0.0.1:5020")
 
-		// StatsD and JSON sinks
-		hstream := ghealth.NewStream("statsd.server:5000", "yourappname", "127.0.0.1:5020")
+		// StatsD and JSON sinks (StatsDSinkOptions can be nil)
+		hstream := ghealth.NewStream("statsd.server:5000", &health.StatsDSinkOptions{Prefix:"yourappname"}, "127.0.0.1:5020")
 
 		// It's a standard *health.Stream, so you can do anything you want!
 		hstream.AddSink(&health.WriterSink{os.Stdout})
@@ -49,11 +49,12 @@ package ghealth
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/gocraft/health"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gocraft/health"
 )
 
 const (
@@ -69,14 +70,14 @@ const (
 //
 // statsd: StatsD address and port.
 //
-// appname Application name for StatsD.
+// statsdOpts: StatsD options (can be nil, use .Prefix to set an application name if needed)
 //
 // serversink: Bind address for Json sink, empty if not needed.
-func NewStream(statsd string, appname string, serversink string) *health.Stream {
+func NewStream(statsd string, statsdOpts *health.StatsDSinkOptions, serversink string) *health.Stream {
 	var stream = health.NewStream()
 
 	if statsd != "" {
-		statsdSink, err := health.NewStatsDSink(statsd, appname)
+		statsdSink, err := health.NewStatsDSink(statsd, statsdOpts)
 		if err != nil {
 			fmt.Println("HEALTH: Adding stdout health sink...")
 			stream.AddSink(&health.WriterSink{os.Stdout})
